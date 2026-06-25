@@ -19,24 +19,26 @@
 #include "dobby.h"
 
 int scoreMul = 1, coinsMul = 1;
-bool isNoCooldownEnabled = true;
-void* old_UpdateCooldown = nullptr;
+// --- PUNTEROS PARA EL COOLDOWN DE HABILIDADES ---
+void (*old_StartSkillUI)(void* instance, float duration, float endValue) = nullptr;
+void (*old_UpdateSkillUI)(void* instance, float duration, float endValue) = nullptr;
+void (*old_StartSkillLog)(void* instance, float duration, float endValue) = nullptr;
+void (*old_UpdateSkillLog)(void* instance, float duration, float endValue) = nullptr;
 
-// --- FUNCIONES ---
-void UpdateCooldown_Hook(void* instance) {
-    if (instance != nullptr) {
-        // 1. NO COOLDOWN (Tiempo + Ticks actuales + Ticks futuros)
-        *(float*)((uintptr_t)instance + 0x90) = 0.0f;  // _cooldown
-        *(int*)((uintptr_t)instance + 0xD8) = 0;       // _cooldownInTicks
-        *(int*)((uintptr_t)instance + 0xDC) = 0;       // _nextTickToUseSkill
+// Hooks para el sistema UI (Imagen 1000022637.png)
+void StartSkillUI_Hook(void* instance, float duration, float endValue) {
+    old_StartSkillUI(instance, 0.0f, endValue);
+}
+void UpdateSkillUI_Hook(void* instance, float duration, float endValue) {
+    old_UpdateSkillUI(instance, 0.0f, endValue);
+}
 
-        // 2. ATAQUE SIN DELAY (Elimina el retraso de la animación y del golpe)
-        *(float*)((uintptr_t)instance + 0x94) = 0.0f;  // _attackDelay
-        *(float*)((uintptr_t)instance + 0x98) = 0.0f;  // _attackAnimationDelay
-    }
-    
-    // Ejecuta la función original del juego para evitar cierres forzados (crash)
-    reinterpret_cast<void (*)(void*)>(old_UpdateCooldown)(instance);
+// Hooks para el sistema Lógico (Imagen 1000022639.png)
+void StartSkillLog_Hook(void* instance, float duration, float endValue) {
+    old_StartSkillLog(instance, 0.0f, endValue);
+}
+void UpdateSkillLog_Hook(void* instance, float duration, float endValue) {
+    old_UpdateSkillLog(instance, 0.0f, endValue);
 }
 
 // Do not change or translate the first text unless you know what you are doing
@@ -269,8 +271,13 @@ void hack_thread() {
     // Aquí instalamos el No Cooldown
     // Asegúrate de que 0x7370B54 sea el offset correcto para tu juego
     // Cambia el 0x7370B54 por el Offset real: 0x736CB54
-    HOOK(targetLibName, "0x736CB54", UpdateCooldown_Hook, old_UpdateCooldown);
-    isNoCooldownEnabled = true;
+// Enlaces para la interfaz visual de los botones (Offsets de la captura 37)
+    HOOK(targetLibName, "0x6C82238", StartSkillUI_Hook, old_StartSkillUI);
+    HOOK(targetLibName, "0x6C82260", UpdateSkillUI_Hook, old_UpdateSkillUI);
+
+    // Enlaces para la lógica real de disparo (Offsets de la captura 39)
+    HOOK(targetLibName, "0x6C8B17C", StartSkillLog_Hook, old_StartSkillLog);
+    HOOK(targetLibName, "0x6C8B1F0", UpdateSkillLog_Hook, old_UpdateSkillLog);
     HOOK(targetLibName, "0x107A2FC", AddCoins, old_AddCoins);
 
     // HOOK(targetLibName, "0x107A2E0", AddScore, old_AddScore);
