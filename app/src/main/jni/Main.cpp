@@ -18,23 +18,18 @@
 #include "Includes/Macros.h"
 #include "dobby.h"
 
-bool (*old_TuFuncionInvencible)(void* instance);
-
-bool TuFuncionInvencible_Hook(void* instance) {
-    return true;
-}
-
-void UpdateCooldown_Hook(void* instance) {
-    if (isNoCooldownEnabled && instance != nullptr) {
-        // Escribe 0 en el offset 0xD8 (ajusta este offset si es necesario)
-        *(int*)((uintptr_t)instance + 0xD8) = 0;
-    }
-    reinterpret_cast<void (*)(void*)>(old_UpdateCooldown)(instance);
-}
-
 int scoreMul = 1, coinsMul = 1;
 bool isNoCooldownEnabled = false;
 void* old_UpdateCooldown = nullptr;
+
+// --- FUNCIONES ---
+void UpdateCooldown_Hook(void* instance) {
+    if (isNoCooldownEnabled && instance != nullptr) {
+        *(int*)((uintptr_t)instance + 0xD8) = 0;
+    }
+    // Aquí usamos la variable global
+    reinterpret_cast<void (*)(void*)>(old_UpdateCooldown)(instance);
+}
 
 // Do not change or translate the first text unless you know what you are doing
 // Assigning feature numbers is optional. Without it, it will automatically count for you, starting from 0
@@ -266,7 +261,7 @@ void hack_thread() {
     StartInvcibility = (void (*)(void *, float)) getAbsoluteAddress(targetLibName, OBFUSCATE("_characterPlayer_Update"));
     // Aquí instalamos el No Cooldown
     // Asegúrate de que 0x7370B54 sea el offset correcto para tu juego
-    HOOK(targetLibName, "0x7370B54", (void*)UpdateCooldown_Hook, (void*)old_UpdateCooldown);
+    HOOK(targetLibName, "0x7370B54", UpdateCooldown_Hook, old_UpdateCooldown);
     HOOK(targetLibName, "0x107A2FC", AddCoins, old_AddCoins);
 
     // HOOK(targetLibName, "0x107A2E0", AddScore, old_AddScore);
