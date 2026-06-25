@@ -261,6 +261,7 @@ void hack_thread() {
     // Aquí instalamos el No Cooldown
     // Asegúrate de que 0x7370B54 sea el offset correcto para tu juego
     HOOK(targetLibName, "0x7370B54", UpdateCooldown_Hook, old_UpdateCooldown);
+    isNoCooldownEnabled = true;
     HOOK(targetLibName, "0x107A2FC", AddCoins, old_AddCoins);
 
     // HOOK(targetLibName, "0x107A2E0", AddScore, old_AddScore);
