@@ -17,8 +17,10 @@
 #include "Menu/Jni.hpp"
 #include "Includes/Macros.h"
 #include "dobby.h"
-
+// --- VARIABLES GLOBALES DEL MENÚ ---
 int scoreMul = 1, coinsMul = 1;
+bool isNoCooldownEnabled = false; // <-- VUELVE A AÑADIR ESTA LÍNEA EXACTAMENTE AQUÍ
+
 // --- PUNTEROS PARA EL COOLDOWN DE HABILIDADES ---
 void (*old_StartSkillUI)(void* instance, float duration, float endValue) = nullptr;
 void (*old_UpdateSkillUI)(void* instance, float duration, float endValue) = nullptr;
