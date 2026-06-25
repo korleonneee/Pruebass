@@ -18,6 +18,12 @@
 #include "Includes/Macros.h"
 #include "dobby.h"
 
+bool (*old_TuFuncionInvencible)(void* instance);
+
+bool TuFuncionInvencible_Hook(void* instance) {
+    return true;
+}
+
 int scoreMul = 1, coinsMul = 1;
 
 // Do not change or translate the first text unless you know what you are doing
@@ -241,6 +247,7 @@ void hack_thread() {
     // You can modify the "Active ABI" in "Build Variants" to switch to another architecture for parsing.
 #if defined(__aarch64__)
     //Il2Cpp: Use RVA offset
+    HOOK(targetLibName, "0x6B83C08", TuFuncionInvencible_Hook, old_TuFuncionInvencible);
     StartInvcibility = (void (*)(void *, float)) getAbsoluteAddress(targetLibName, OBFUSCATE("0x107A3BC"));
     StartInvcibility = (void (*)(void *, float)) getAbsoluteAddress(targetLibName, OBFUSCATE("_characterPlayer_Update"));
 
