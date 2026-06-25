@@ -22,25 +22,21 @@ int scoreMul = 1, coinsMul = 1;
 bool isNoCooldownEnabled = false; // <-- VUELVE A AÑADIR ESTA LÍNEA EXACTAMENTE AQUÍ
 
 // --- PUNTEROS PARA EL COOLDOWN DE HABILIDADES ---
-void (*old_StartSkillUI)(void* instance, float duration, float endValue) = nullptr;
-void (*old_UpdateSkillUI)(void* instance, float duration, float endValue) = nullptr;
-void (*old_StartSkillLog)(void* instance, float duration, float endValue) = nullptr;
-void (*old_UpdateSkillLog)(void* instance, float duration, float endValue) = nullptr;
+// --- PUNTEROS CON PARÁMETRO DE ESTABILIDAD ---
+void (*old_StartSkillLog)(void* instance, float duration, float endValue, void* methodInfo) = nullptr;
+void (*old_UpdateSkillLog)(void* instance, float duration, float endValue, void* methodInfo) = nullptr;
 
-// Hooks para el sistema UI (Imagen 1000022637.png)
-void StartSkillUI_Hook(void* instance, float duration, float endValue) {
-    old_StartSkillUI(instance, 0.0f, endValue);
-}
-void UpdateSkillUI_Hook(void* instance, float duration, float endValue) {
-    old_UpdateSkillUI(instance, 0.0f, endValue);
+// Añadimos 'methodInfo' al final para mantener alineada la CPU
+void StartSkillLog_Hook(void* instance, float duration, float endValue, void* methodInfo) {
+    if (old_StartSkillLog != nullptr) {
+        old_StartSkillLog(instance, 0.0f, endValue, methodInfo);
+    }
 }
 
-// Hooks para el sistema Lógico (Imagen 1000022639.png)
-void StartSkillLog_Hook(void* instance, float duration, float endValue) {
-    old_StartSkillLog(instance, 0.0f, endValue);
-}
-void UpdateSkillLog_Hook(void* instance, float duration, float endValue) {
-    old_UpdateSkillLog(instance, 0.0f, endValue);
+void UpdateSkillLog_Hook(void* instance, float duration, float endValue, void* methodInfo) {
+    if (old_UpdateSkillLog != nullptr) {
+        old_UpdateSkillLog(instance, 0.0f, endValue, methodInfo);
+    }
 }
 
 // Do not change or translate the first text unless you know what you are doing
@@ -273,10 +269,6 @@ void hack_thread() {
     // Aquí instalamos el No Cooldown
     // Asegúrate de que 0x7370B54 sea el offset correcto para tu juego
     // Cambia el 0x7370B54 por el Offset real: 0x736CB54
-// Enlaces para la interfaz visual de los botones (Offsets de la captura 37)
-    HOOK(targetLibName, "0x6C82238", StartSkillUI_Hook, old_StartSkillUI);
-    HOOK(targetLibName, "0x6C82260", UpdateSkillUI_Hook, old_UpdateSkillUI);
-
     // Enlaces para la lógica real de disparo (Offsets de la captura 39)
     HOOK(targetLibName, "0x6C8B17C", StartSkillLog_Hook, old_StartSkillLog);
     HOOK(targetLibName, "0x6C8B1F0", UpdateSkillLog_Hook, old_UpdateSkillLog);
