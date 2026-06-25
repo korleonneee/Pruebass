@@ -256,7 +256,6 @@ void hack_thread() {
     // You can modify the "Active ABI" in "Build Variants" to switch to another architecture for parsing.
 #if defined(__aarch64__)
     //Il2Cpp: Use RVA offset
-    HOOK(targetLibName, "0x6B83C08", TuFuncionInvencible_Hook, old_TuFuncionInvencible);
     StartInvcibility = (void (*)(void *, float)) getAbsoluteAddress(targetLibName, OBFUSCATE("0x107A3BC"));
     StartInvcibility = (void (*)(void *, float)) getAbsoluteAddress(targetLibName, OBFUSCATE("_characterPlayer_Update"));
     // Aquí instalamos el No Cooldown
