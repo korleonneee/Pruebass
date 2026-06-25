@@ -24,7 +24,17 @@ bool TuFuncionInvencible_Hook(void* instance) {
     return true;
 }
 
+void UpdateCooldown_Hook(void* instance) {
+    if (isNoCooldownEnabled && instance != nullptr) {
+        // Escribe 0 en el offset 0xD8 (ajusta este offset si es necesario)
+        *(int*)((uintptr_t)instance + 0xD8) = 0;
+    }
+    reinterpret_cast<void (*)(void*)>(old_UpdateCooldown)(instance);
+}
+
 int scoreMul = 1, coinsMul = 1;
+bool isNoCooldownEnabled = false;
+void* old_UpdateCooldown = nullptr;
 
 // Do not change or translate the first text unless you know what you are doing
 // Assigning feature numbers is optional. Without it, it will automatically count for you, starting from 0
@@ -37,6 +47,7 @@ jobjectArray GetFeatureList(JNIEnv *env, jobject context) {
     jobjectArray ret;
 
     const char *features[] = {
+            OBFUSCATE("Toggle_No Cooldown"), // Añade
             OBFUSCATE("Toggle_No death"),
             OBFUSCATE("Button_Start Invcibility (30 sec duration)"),
             OBFUSCATE("SeekBar_Score multiplier_1_100"),
@@ -103,6 +114,9 @@ bool btnPressed = false;
 void Changes(JNIEnv *env, jclass clazz, jobject obj, jint featNum, jstring featName, jint value, jlong Lvalue, jboolean boolean, jstring text) {
 
     switch (featNum) {
+        case 6:
+            isNoCooldownEnabled = boolean;
+            break;
         case 0:
             // offset, hex
             PATCH_SWITCH(targetLibName, "0x1079728", "C0 03 5F D6", boolean);
@@ -250,7 +264,9 @@ void hack_thread() {
     HOOK(targetLibName, "0x6B83C08", TuFuncionInvencible_Hook, old_TuFuncionInvencible);
     StartInvcibility = (void (*)(void *, float)) getAbsoluteAddress(targetLibName, OBFUSCATE("0x107A3BC"));
     StartInvcibility = (void (*)(void *, float)) getAbsoluteAddress(targetLibName, OBFUSCATE("_characterPlayer_Update"));
-
+    // Aquí instalamos el No Cooldown
+    // Asegúrate de que 0x7370B54 sea el offset correcto para tu juego
+    HOOK(targetLibName, "0x7370B54", (void*)UpdateCooldown_Hook, (void*)old_UpdateCooldown);
     HOOK(targetLibName, "0x107A2FC", AddCoins, old_AddCoins);
 
     // HOOK(targetLibName, "0x107A2E0", AddScore, old_AddScore);
