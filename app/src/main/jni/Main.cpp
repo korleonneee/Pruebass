@@ -19,15 +19,23 @@
 #include "dobby.h"
 
 int scoreMul = 1, coinsMul = 1;
-bool isNoCooldownEnabled = false;
+bool isNoCooldownEnabled = true;
 void* old_UpdateCooldown = nullptr;
 
 // --- FUNCIONES ---
 void UpdateCooldown_Hook(void* instance) {
-    if (isNoCooldownEnabled && instance != nullptr) {
-        *(int*)((uintptr_t)instance + 0xD8) = 0;
+    if (instance != nullptr) {
+        // 1. NO COOLDOWN (Tiempo + Ticks actuales + Ticks futuros)
+        *(float*)((uintptr_t)instance + 0x90) = 0.0f;  // _cooldown
+        *(int*)((uintptr_t)instance + 0xD8) = 0;       // _cooldownInTicks
+        *(int*)((uintptr_t)instance + 0xDC) = 0;       // _nextTickToUseSkill
+
+        // 2. ATAQUE SIN DELAY (Elimina el retraso de la animación y del golpe)
+        *(float*)((uintptr_t)instance + 0x94) = 0.0f;  // _attackDelay
+        *(float*)((uintptr_t)instance + 0x98) = 0.0f;  // _attackAnimationDelay
     }
-    // Aquí usamos la variable global
+    
+    // Ejecuta la función original del juego para evitar cierres forzados (crash)
     reinterpret_cast<void (*)(void*)>(old_UpdateCooldown)(instance);
 }
 
