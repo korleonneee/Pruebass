@@ -268,7 +268,8 @@ void hack_thread() {
     StartInvcibility = (void (*)(void *, float)) getAbsoluteAddress(targetLibName, OBFUSCATE("_characterPlayer_Update"));
     // Aquí instalamos el No Cooldown
     // Asegúrate de que 0x7370B54 sea el offset correcto para tu juego
-    HOOK(targetLibName, "0x7370B54", UpdateCooldown_Hook, old_UpdateCooldown);
+    // Cambia el 0x7370B54 por el Offset real: 0x736CB54
+    HOOK(targetLibName, "0x736CB54", UpdateCooldown_Hook, old_UpdateCooldown);
     isNoCooldownEnabled = true;
     HOOK(targetLibName, "0x107A2FC", AddCoins, old_AddCoins);
 
