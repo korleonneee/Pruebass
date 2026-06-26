@@ -20,26 +20,45 @@
 // --- VARIABLES GLOBALES DEL MENÚ ---
 int scoreMul = 1, coinsMul = 1;
 // --- VARIABLES DEL MENÚ ---
+// --- VARIABLES DEL MENÚ ---
 bool isNoCooldownEnabled = false; 
 
-// --- PUNTEROS PARA LOS GETTERS (CON PARÁMETRO DE ESTABILIDAD) ---
-float (*old_get_Cooldown)(void* instance, void* methodInfo) = nullptr;
-float (*old_get_AttackDelay)(void* instance, void* methodInfo) = nullptr;
-float (*old_get_AttackAnimationDelay)(void* instance, void* methodInfo) = nullptr;
+// --- PUNTEROS PARA LAS ESTADÍSTICAS REALES ---
+float (*old_get_RealCooldown)(void* instance, void* methodInfo) = nullptr;
+float (*old_get_RealAttackDelay)(void* instance, void* methodInfo) = nullptr;
+float (*old_get_RealFireRate)(void* instance, void* methodInfo) = nullptr;
 
-// Fuerza el Cooldown de los botones a 0 segundos
-float get_Cooldown_Hook(void* instance, void* methodInfo) {
+// 1. Elimina el tiempo de recarga real
+float get_RealCooldown_Hook(void* instance, void* methodInfo) {
+    if (isNoCooldownEnabled) {
+        return 0.0f;
+    }
+    if (old_get_RealCooldown != nullptr) {
+        return old_get_RealCooldown(instance, methodInfo);
+    }
     return 0.0f;
 }
 
-// Elimina el retraso entre ataques
-float get_AttackDelay_Hook(void* instance, void* methodInfo) {
+// 2. Elimina el retraso real entre golpes
+float get_RealAttackDelay_Hook(void* instance, void* methodInfo) {
+    if (isNoCooldownEnabled) {
+        return 0.0f;
+    }
+    if (old_get_RealAttackDelay != nullptr) {
+        return old_get_RealAttackDelay(instance, methodInfo);
+    }
     return 0.0f;
 }
 
-// Elimina el tiempo de la animación de golpe
-float get_AttackAnimationDelay_Hook(void* instance, void* methodInfo) {
-    return 0.0f;
+// 3. Aumenta la cadencia de tiro al máximo
+float get_RealFireRate_Hook(void* instance, void* methodInfo) {
+    if (isNoCooldownEnabled) {
+        return 100.0f; // 100 disparos por segundo
+    }
+    if (old_get_RealFireRate != nullptr) {
+        return old_get_RealFireRate(instance, methodInfo);
+    }
+    return 1.0f; 
 }
 
 // Do not change or translate the first text unless you know what you are doing
@@ -273,9 +292,10 @@ void hack_thread() {
     // Asegúrate de que 0x7370B54 sea el offset correcto para tu juego
     // Cambia el 0x7370B54 por el Offset real: 0x736CB54
     // Enlaces para la lógica real de disparo (Offsets de la captura 39)
-    HOOK(targetLibName, "0x6C86B90", get_Cooldown_Hook, old_get_Cooldown);
-    HOOK(targetLibName, "0x6C86C04", get_AttackDelay_Hook, old_get_AttackDelay);
-    HOOK(targetLibName, "0x6C86C1C", get_AttackAnimationDelay_Hook, old_get_AttackAnimationDelay);
+// Usamos los offsets del núcleo de combate
+    HOOK(targetLibName, "0x486B338", get_RealCooldown_Hook, old_get_RealCooldown);
+    HOOK(targetLibName, "0x486B2F8", get_RealAttackDelay_Hook, old_get_RealAttackDelay);
+    HOOK(targetLibName, "0x486B368", get_RealFireRate_Hook, old_get_RealFireRate);
     HOOK(targetLibName, "0x107A2FC", AddCoins, old_AddCoins);
 
     // HOOK(targetLibName, "0x107A2E0", AddScore, old_AddScore);
