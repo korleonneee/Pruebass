@@ -19,24 +19,27 @@
 #include "dobby.h"
 // --- VARIABLES GLOBALES DEL MENÚ ---
 int scoreMul = 1, coinsMul = 1;
-bool isNoCooldownEnabled = false; // <-- VUELVE A AÑADIR ESTA LÍNEA EXACTAMENTE AQUÍ
+// --- VARIABLES DEL MENÚ ---
+bool isNoCooldownEnabled = false; 
 
-// --- PUNTEROS PARA EL COOLDOWN DE HABILIDADES ---
-// --- PUNTEROS CON PARÁMETRO DE ESTABILIDAD ---
-void (*old_StartSkillLog)(void* instance, float duration, float endValue, void* methodInfo) = nullptr;
-void (*old_UpdateSkillLog)(void* instance, float duration, float endValue, void* methodInfo) = nullptr;
+// --- PUNTEROS PARA LOS GETTERS (CON PARÁMETRO DE ESTABILIDAD) ---
+float (*old_get_Cooldown)(void* instance, void* methodInfo) = nullptr;
+float (*old_get_AttackDelay)(void* instance, void* methodInfo) = nullptr;
+float (*old_get_AttackAnimationDelay)(void* instance, void* methodInfo) = nullptr;
 
-// Añadimos 'methodInfo' al final para mantener alineada la CPU
-void StartSkillLog_Hook(void* instance, float duration, float endValue, void* methodInfo) {
-    if (old_StartSkillLog != nullptr) {
-        old_StartSkillLog(instance, 0.0f, endValue, methodInfo);
-    }
+// Fuerza el Cooldown de los botones a 0 segundos
+float get_Cooldown_Hook(void* instance, void* methodInfo) {
+    return 0.0f;
 }
 
-void UpdateSkillLog_Hook(void* instance, float duration, float endValue, void* methodInfo) {
-    if (old_UpdateSkillLog != nullptr) {
-        old_UpdateSkillLog(instance, 0.0f, endValue, methodInfo);
-    }
+// Elimina el retraso entre ataques
+float get_AttackDelay_Hook(void* instance, void* methodInfo) {
+    return 0.0f;
+}
+
+// Elimina el tiempo de la animación de golpe
+float get_AttackAnimationDelay_Hook(void* instance, void* methodInfo) {
+    return 0.0f;
 }
 
 // Do not change or translate the first text unless you know what you are doing
@@ -270,8 +273,9 @@ void hack_thread() {
     // Asegúrate de que 0x7370B54 sea el offset correcto para tu juego
     // Cambia el 0x7370B54 por el Offset real: 0x736CB54
     // Enlaces para la lógica real de disparo (Offsets de la captura 39)
-    HOOK(targetLibName, "0x6C8B17C", StartSkillLog_Hook, old_StartSkillLog);
-    HOOK(targetLibName, "0x6C8B1F0", UpdateSkillLog_Hook, old_UpdateSkillLog);
+    HOOK(targetLibName, "0x6C86B90", get_Cooldown_Hook, old_get_Cooldown);
+    HOOK(targetLibName, "0x6C86C04", get_AttackDelay_Hook, old_get_AttackDelay);
+    HOOK(targetLibName, "0x6C86C1C", get_AttackAnimationDelay_Hook, old_get_AttackAnimationDelay);
     HOOK(targetLibName, "0x107A2FC", AddCoins, old_AddCoins);
 
     // HOOK(targetLibName, "0x107A2E0", AddScore, old_AddScore);
