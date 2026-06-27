@@ -21,44 +21,14 @@
 int scoreMul = 1, coinsMul = 1;
 // --- VARIABLES DEL MENÚ ---
 // --- VARIABLES DEL MENÚ ---
-bool isNoCooldownEnabled = false; 
+// Puntero para guardar la función original del juego
+void (*original_ApplyCooldownReduction)(void* instance, float amount);
 
-// --- PUNTEROS PARA LAS ESTADÍSTICAS REALES ---
-float (*old_get_RealCooldown)(void* instance, void* methodInfo) = nullptr;
-float (*old_get_RealAttackDelay)(void* instance, void* methodInfo) = nullptr;
-float (*old_get_RealFireRate)(void* instance, void* methodInfo) = nullptr;
-
-// 1. Elimina el tiempo de recarga real
-float get_RealCooldown_Hook(void* instance, void* methodInfo) {
-    if (isNoCooldownEnabled) {
-        return 0.0f;
-    }
-    if (old_get_RealCooldown != nullptr) {
-        return old_get_RealCooldown(instance, methodInfo);
-    }
-    return 0.0f;
-}
-
-// 2. Elimina el retraso real entre golpes
-float get_RealAttackDelay_Hook(void* instance, void* methodInfo) {
-    if (isNoCooldownEnabled) {
-        return 0.0f;
-    }
-    if (old_get_RealAttackDelay != nullptr) {
-        return old_get_RealAttackDelay(instance, methodInfo);
-    }
-    return 0.0f;
-}
-
-// 3. Aumenta la cadencia de tiro al máximo
-float get_RealFireRate_Hook(void* instance, void* methodInfo) {
-    if (isNoCooldownEnabled) {
-        return 100.0f; // 100 disparos por segundo
-    }
-    if (old_get_RealFireRate != nullptr) {
-        return old_get_RealFireRate(instance, methodInfo);
-    }
-    return 1.0f; 
+// Nuestra función que reemplaza a la original
+void hooked_ApplyCooldownReduction(void* instance, float amount) {
+    // 0.95f significa 95% de reducción. 
+    // Siempre llamamos a la original pero con nuestro valor forzado.
+    original_ApplyCooldownReduction(instance, 0.98f);
 }
 
 // Do not change or translate the first text unless you know what you are doing
@@ -291,13 +261,14 @@ void hack_thread() {
     // Aquí instalamos el No Cooldown
     // Asegúrate de que 0x7370B54 sea el offset correcto para tu juego
     // Cambia el 0x7370B54 por el Offset real: 0x736CB54
-    // Enlaces para la lógica real de disparo (Offsets de la captura 39)
-// Usamos los offsets del núcleo de combate
-    HOOK(targetLibName, "0x486B338", get_RealCooldown_Hook, old_get_RealCooldown);
-    HOOK(targetLibName, "0x486B2F8", get_RealAttackDelay_Hook, old_get_RealAttackDelay);
-    HOOK(targetLibName, "0x486B368", get_RealFireRate_Hook, old_get_RealFireRate);
+    // Enlaces para la lógica real de disparo (Offsets de la captura 39
     HOOK(targetLibName, "0x107A2FC", AddCoins, old_AddCoins);
 
+    // Instalación del hook hardcodeado para reducción de cooldown
+    // RVA: 0x6C073B8
+    DobbyHook((void*)(get_module_base(targetLibName) + 0x6C073B8), 
+              (void*)hooked_ApplyCooldownReduction, 
+              (void**)&original_ApplyCooldownReduction);
     // HOOK(targetLibName, "0x107A2E0", AddScore, old_AddScore);
     // === This function was completely replaced with super-macro `install_hook_name` from dobby.h ===
     // don't forget set address for install_hook:
@@ -310,7 +281,7 @@ void hack_thread() {
     //HOOK_NO_ORIG("libFileC.so", "0x123456", FunctionExample);
     //HOOK_NO_ORIG("libFileC.so", "_example__sym", FunctionExample);
 
-    //PATCH(targetLibName, "0x10709AC", "E05F40B2C0035FD6");
+    //PATCH(targetLibName, "0x10709AC", "E05F40B2C0035FD6")
 
     INST(targetLibName, "0x23558C", "AnyNameForDetect", true);
 
