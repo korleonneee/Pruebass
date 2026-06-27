@@ -20,6 +20,7 @@
 // --- VARIABLES GLOBALES DEL MENÚ ---
 int scoreMul = 1, coinsMul = 1;
 // --- VARIABLES DEL MENÚ ---
+bool isNoCooldownEnabled = false;
 // --- VARIABLES DEL MENÚ ---
 // Puntero para guardar la función original del juego
 // 1. Declaración del puntero original (La firma debe incluir el 'this' pointer)
@@ -263,16 +264,14 @@ void hack_thread() {
     // Asegúrate de que 0x7370B54 sea el offset correcto para tu juego
     // Cambia el 0x7370B54 por el Offset real: 0x736CB54
 // 1. Declaración del puntero original (La firma debe incluir el 'this' pointer)
-    HOOK(targetLibName, "0x6C073B8", (void*)hooked_ApplyCooldownReduction, (void**)&original_ApplyCooldownReduction);
+// Fíjate que le quité el '&' a original_ApplyCooldownReduction
+    HOOK(targetLibName, "0x6C073B8", (void*)hooked_ApplyCooldownReduction, original_ApplyCooldownReduction);
 
     // Enlaces para la lógica real de disparo (Offsets de la captura 39
     HOOK(targetLibName, "0x107A2FC", AddCoins, old_AddCoins);
 
     // Instalación del hook hardcodeado para reducción de cooldown
     // RVA: 0x6C073B8
-    DobbyHook((void*)(get_module_base(targetLibName) + 0x6C073B8), 
-              (void*)hooked_ApplyCooldownReduction, 
-              (void**)&original_ApplyCooldownReduction);
     // HOOK(targetLibName, "0x107A2E0", AddScore, old_AddScore);
     // === This function was completely replaced with super-macro `install_hook_name` from dobby.h ===
     // don't forget set address for install_hook:
