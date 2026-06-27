@@ -24,13 +24,14 @@ bool isNoCooldownEnabled = false;
 // --- VARIABLES DEL MENÚ ---
 // Puntero para guardar la función original del juego
 // 1. Declaración del puntero original (La firma debe incluir el 'this' pointer)
-void (*original_ApplyCooldownReduction)(void* instance, int slot, float amount);
+// 1. Declaración del puntero original
+// Firma: (instancia, slot, float duration)
+void (*original_ApplySkillCooldown)(void* instance, int slot, float duration);
 
-// 2. Nuestra función Hook
-void hooked_ApplyCooldownReduction(void* instance, int slot, float amount) {
-    // Forzamos el cooldown a 0.95f (95% de reducción)
-    // El 'slot' es el tipo de habilidad (arma/especial)
-    original_ApplyCooldownReduction(instance, slot, 0.95f);
+// 2. Tu función Hook
+void hooked_ApplySkillCooldown(void* instance, int slot, float duration) {
+    // Forzamos el cooldown a 0.0f
+    original_ApplySkillCooldown(instance, slot, 0.0f);
 }
 
 // Do not change or translate the first text unless you know what you are doing
@@ -265,8 +266,7 @@ void hack_thread() {
     // Cambia el 0x7370B54 por el Offset real: 0x736CB54
 // 1. Declaración del puntero original (La firma debe incluir el 'this' pointer)
 // Fíjate que le quité el '&' a original_ApplyCooldownReduction
-    HOOK(targetLibName, "0x6C073B8", (void*)hooked_ApplyCooldownReduction, original_ApplyCooldownReduction);
-
+    HOOK(targetLibName, "0x7245044", (void*)hooked_ApplySkillCooldown, original_ApplySkillCooldown);
     // Enlaces para la lógica real de disparo (Offsets de la captura 39
     HOOK(targetLibName, "0x107A2FC", AddCoins, old_AddCoins);
 
